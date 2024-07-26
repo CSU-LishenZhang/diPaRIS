@@ -21,3 +21,7 @@ Dynamic and Interpretable Protein-RNA Interactions Prediction with U-shaped Netw
 - numpy
 - tensorflow
 - keras_nlp
+
+##  How to train diPaRIS
+You can train the model of 5-fold cross-validation in a very simple way by run `diPaRIS.py` under the `\code` directory.
+
