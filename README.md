@@ -26,4 +26,10 @@ Dynamic and Interpretable Protein-RNA Interactions Prediction with U-shaped Netw
 You can train the model of 5-fold cross-validation in a very simple way by run `diPaRIS.py` under the `/code` directory.
 
 ### There are some parameters you can set in the diPaRIS.py file as needed:
-In the function `dealwithdata`, you can set the data path for diPaRIS. The default path is located under `'../dataset/' + protein + '/'`. Adjust this path as needed for your data setup. The data required for diPaRIS prediction is explained in the corresponding directory. 
+In the function `dealwithdata`, you can set the *data path* for diPaRIS. The default path is located under `'../dataset/' + protein + '/'`. Adjust this path as needed for your data setup. 
+
+In the function `main`, you can set the *storage path* for trained diPaRIS models. The default path is under the working directory. Adjust this path in the `model.save`, `os.path.exists`, and `model.load_weights` functions as needed for your data setup. This ensures that your model can be saved and loaded correctly.
+
+In the function `main`, you can set the *dataset name* for diPaRIS. The default dataset is `AKAP1-HepG2`. Adjust this name as needed for your data setup. You can also prepare the dataset yourself. The data required for diPaRIS prediction is illustrated in `/AKAP1-HepG2`.
+
+Thank you and enjoy the tool!
