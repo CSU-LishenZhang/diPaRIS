@@ -23,5 +23,7 @@ Dynamic and Interpretable Protein-RNA Interactions Prediction with U-shaped Netw
 - keras_nlp
 
 ##  How to train diPaRIS
-You can train the model of 5-fold cross-validation in a very simple way by run `diPaRIS.py` under the `\code` directory.
+You can train the model of 5-fold cross-validation in a very simple way by run `diPaRIS.py` under the `/code` directory.
 
+### There are some parameters you can set in the diPaRIS.py file as needed:
+In the function `dealwithdata`, you can set the data path for diPaRIS. The default path is located under `'../dataset/' + protein + '/'`. Adjust this path as needed for your data setup. The data required for diPaRIS prediction is explained in the corresponding directory. 
