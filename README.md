@@ -1,11 +1,12 @@
-# diPaRIS
+# diPaRIS：Dynamic and Interpretable Protein-RNA Interactions Prediction with U-shaped Network and Novel Structures Coding
 ## Introduction
-diPaRIS is a deep learning framework that incorporates RNA structural data derived from in vivo experiments to predict dynamic protein-RNA interactions, achieving improved accuracy and enhanced interpretability. 
-## diPaRIS overview
+Dynamic protein-RNA interactions play a crucial role in various biological processes and disease development. Proteins interact with RNAs through binding sites with specific structural patterns. Current computational methods take RNA structure in vivo into account, but often fail to fully capture the structure contextual association of nucleotides, limiting their predictive accuracy. 
 
-<div align="center">
-<p><img src="overview.jpg" width="600" /></p>
-</div>
+Here, we propose diPaRIS, a deep learning framework that integrates RNA structure in vivo to predict dynamic protein-RNA interactions with improved accuracy and enhanced interpretability. diPaRIS introduces a novel coding scheme to encode nucleotide correlations, providing a comprehensive representation of dynamic RNA structures. Using a U-shaped network architecture and attention mechanisms, diPaRIS enables interpretable analysis by learning sequence binding motifs and attribution maps. 
+
+This repository contains the source code for both training and prediction, along with an example dataset.
+## diPaRIS overview
+![alt text](https://github.com/CSU-LishenZhang/diPaRIS/blob/main/Overview.jpg)
 ## Requirements
 - keras
 - sklearn
