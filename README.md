@@ -1,7 +1,11 @@
 # diPaRIS
 ## Introduction
 diPaRIS is a deep learning framework that incorporates RNA structural data derived from in vivo experiments to predict dynamic protein-RNA interactions, achieving improved accuracy and enhanced interpretability. 
-![alt text]([https://github.com/CSU-LishenZhang/diPaRIS/blob/main/Overview.png])
+## diPaRIS overview
+
+<div align="center">
+<p><img src="overview.jpg" width="600" /></p>
+</div>
 ## Requirements
 - keras
 - sklearn
