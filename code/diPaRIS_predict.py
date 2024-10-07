@@ -83,17 +83,13 @@ def icshapeDS(seq, icshape):
 
 def dealwithdata(protein):
     seqP = []
-    seqN = []
     dataX = []
     dataX2 = []
     icshapeP = []
-    icshapeN = []
-    dataY = []
     with open('../dataset/' + protein + '/positive_seq') as f:
         for line in f:
             if '>' not in line:
                 seqP.append(line.strip())
-                dataY.append([0, 1])
     with open('../dataset/' + protein + '/positive_str') as f:
         for line in f:
             row = []
@@ -105,36 +101,12 @@ def dealwithdata(protein):
         dataX.append(coden(seqP[i]))
         dataX2.append(icshapeDS(seqP[i], icshapeP[i]))
 
-    with open('../dataset/' + protein + '/negative_seq') as f:
-        for line in f:
-            if '>' not in line:
-                seqN.append(line.strip())
-                dataY.append([1, 0])
-    with open('../dataset/' + protein + '/negative_str') as f:
-        for line in f:
-            row = []
-            lines = line.strip().split("\t")
-            for x in lines:
-                row.append(float(x))
-            icshapeN.append(row)
-    for i in range(len(icshapeN)):
-        dataX.append(coden(seqN[i]))
-        dataX2.append(icshapeDS(seqN[i], icshapeN[i]))
-
-    indexes = np.random.choice(len(dataY), len(dataY), replace=False)
     dataX = np.array(dataX)[indexes]
     dataX = dataX[:, np.newaxis, :]
-    dataY = np.array(dataY)[indexes]
     dataX2 = np.array(dataX2)[indexes]
     dataX2 = dataX2[:, np.newaxis, :]
-    train_X = np.array(dataX)[round(len(indexes) / 5):]
-    test_X = np.array(dataX)[:round(len(indexes) / 5)]
-    train_y = np.array(dataY)[round(len(indexes) / 5):]
-    test_y = np.array(dataY)[:round(len(indexes) / 5)]
-    train_X2 = np.array(dataX2)[round(len(indexes) / 5):]
-    test_X2 = np.array(dataX2)[:round(len(indexes) / 5)]
 
-    return train_X, test_X, train_y, test_y, train_X2, test_X2
+    return dataX, dataX2
 
 def diPaRIS():
     # input
@@ -256,15 +228,14 @@ def main():
     protein = args.protein
     print(f"Using dataset: {protein}")
 
-    trainX, trainX2, trainY = dealwithdata(protein)
-    trainY = trainY[:, 1]
+    trainX, trainX2 = dealwithdata(protein)
 
     model = U_Transformer()
     print(f"Loading previous best weights for {protein}")
     model.load_weights(f'../new2/Utransformer_weights_{protein}.h5')
 
     prediction = model.predict([trainX, trainX2])[:, 1]
-    print(prediction)
+    print(prediction, protein)
 
 if __name__ == "__main__":
     main()
