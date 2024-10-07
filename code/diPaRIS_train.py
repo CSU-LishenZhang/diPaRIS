@@ -11,6 +11,7 @@ from tensorflow.keras.optimizers import Adam
 # from tensorflow.python.keras.utils.multi_gpu_utils import multi_gpu_model
 from sklearn.metrics import roc_auc_score, precision_recall_curve, auc
 import os
+import argparse
 from ePooling import *
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
@@ -247,14 +248,12 @@ def diPaRIS():
     output = keras.layers.Dense(2, activation="softmax")(stack7)
     return Model(inputs=[left_input, right_input], outputs=[output])
 
-def main():
-    protein_list = {0: 'AKAP1-HepG2'}
-    for p in range(0, 1, 1):
-        protein = protein_list[p]
+def main(protein_list):
+    for protein in protein_list:
         print(protein)
-        # trainXeval, test_X, trainYeval, test_y = dealwithdata(protein)
         trainXeval, test_X, trainYeval, test_y, train_X2, test_X2 = dealwithdata(protein)
         test_y = test_y[:, 1]
+
         kf = KFold(n_splits=5).split(trainYeval)
         auc_list = []
         acc_list = []
@@ -262,6 +261,7 @@ def main():
         recall_list = []
         f1_score_list = []
         aupr_list = []
+
         for train_index, eval_index in kf:
             train_X = trainXeval[train_index]
             train_y = trainYeval[train_index]
@@ -271,9 +271,11 @@ def main():
             model = diPaRIS()
             print(model.summary())
             model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-            if os.path.exists('diPaRIS_' + '_' + protein + '.h5'):
-                print("load previous best weights for model")
-                model.load_weights('diPaRIS_' + '_' + protein + '.h5')
+
+            # Load previous weights if available
+            if os.path.exists(f'diPaRIS_{protein}.h5'):
+                print(f"Loading previous best weights for model: {protein}")
+                model.load_weights(f'diPaRIS_{protein}.h5')
 
             def step_decay(epoch):
                 initial_lrate = 0.0005
@@ -287,7 +289,7 @@ def main():
                          LearningRateScheduler(step_decay)]
             history = model.fit(train_X, train_y, batch_size=16, epochs=64, verbose=0, validation_data=(eval_X, eval_y),
                                 callbacks=callbacks)
-            model.save('diPaRIS_' + '_' + protein + '.h5')
+            model.save(f'diPaRIS_{protein}.h5')
 
             prediction = model.predict(test_X)[:, 1]
             aucs = roc_auc_score(test_y, prediction)
@@ -304,16 +306,24 @@ def main():
             pre_vals, recall_vals, thresholds2 = precision_recall_curve(test_y, predictions)
             aupr_list.append(auc(recall_vals, pre_vals))
 
-    print("AUC: %.4f %.4f %.4f %.4f %.4f" % (auc_list[0], auc_list[1], auc_list[2], auc_list[3], auc_list[4]), protein)
-    print("ACC: %.4f %.4f %.4f %.4f %.4f" % (acc_list[0], acc_list[1], acc_list[2], acc_list[3], acc_list[4]), protein)
-    print("Precision: %.4f %.4f %.4f %.4f %.4f" % (
-    precision_list[0], precision_list[1], precision_list[2], precision_list[3], precision_list[4]), protein)
-    print("Recall: %.4f %.4f %.4f %.4f %.4f" % (
-    recall_list[0], recall_list[1], recall_list[2], recall_list[3], recall_list[4]), protein)
-    print("F1-score: %.4f %.4f %.4f %.4f %.4f" % (
-    f1_score_list[0], f1_score_list[1], f1_score_list[2], f1_score_list[3], f1_score_list[4]), protein)
-    print("AUPR: %.4f %.4f %.4f %.4f %.4f" % (aupr_list[0], aupr_list[1], aupr_list[2], aupr_list[3], aupr_list[4]),
-          protein)
+        print(f"AUC: {auc_list}", protein)
+        print(f"ACC: {acc_list}", protein)
+        print(f"Precision: {precision_list}", protein)
+        print(f"Recall: {recall_list}", protein)
+        print(f"F1-score: {f1_score_list}", protein)
+        print(f"AUPR: {aupr_list}", protein)
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Train diPaRIS model on specified datasets.")
+    
+    # Default dataset AKAP1-HepG2, can be overridden by user input
+    parser.add_argument(
+        '-d', '--datasets', 
+        nargs='+', 
+        default=['AKAP1-HepG2'],  # Set default dataset
+        help='List of dataset names to train on (e.g., -d AKAP1-HepG2 YourDataset1 YourDataset2)'
+    )
+
+    args = parser.parse_args()
+    main(protein_list=args.datasets)
+
