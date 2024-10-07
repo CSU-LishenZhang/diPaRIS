@@ -138,8 +138,8 @@ def dealwithdata(protein):
 
 def diPaRIS():
     # input
-    left_input = keras.layers.Input(shape=(1, 101, 768), name='left_input')
-    right_input = keras.layers.Input(shape=(1, 101, 768), name='right_input')
+    left_input = keras.layers.Input(shape=(1, 101, 4), name='left_input')
+    right_input = keras.layers.Input(shape=(1, 100, 7), name='right_input')
     left_conv = keras.layers.Conv2D(64, (6, 4), padding="same")(left_input)
     left_norm = keras.layers.BatchNormalization()(left_conv)
     left_act = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None,
