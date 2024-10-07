@@ -5,10 +5,9 @@ from sklearn.model_selection import KFold
 import sklearn
 from tensorflow.keras import Model
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard, LearningRateScheduler
-from tensorflow.keras.layers import Activation, Concatenate, Bidirectional, GRU
+from tensorflow.keras.layers import Activation, Concatenate, Bidirectional, GRU, Input, Dropout
 from tensorflow.keras.layers import BatchNormalization, LayerNormalization
 from tensorflow.keras.optimizers import Adam
-# from tensorflow.python.keras.utils.multi_gpu_utils import multi_gpu_model
 from sklearn.metrics import roc_auc_score, precision_recall_curve, auc
 import os
 import argparse
@@ -41,7 +40,7 @@ def chunks_two(seq, win):
         if j == seqlen: break
     return
 
-def icshapeDS(seq, icshape):
+def icshapeDS(seq, struc):
     probabilities = {}
     kmer = {}
     total_windows = len(seq) - 1
@@ -56,62 +55,48 @@ def icshapeDS(seq, icshape):
     vector = np.zeros((len(seq) - 1, 7))
     for i in range(0, len(seq) - 1):
         vector[i][6] = probabilities[seq[i:i + 2]]
-        if icshape[i] != -1 and icshape[i + 1] != -1:
-            if icshape[i] >= icshape[i + 1]:
+        if struc[i] != -1 and struc[i + 1] != -1:
+            if struc[i] >= struc[i + 1]:
                 vector[i][0] = 1
-            if icshape[i] < icshape[i + 1]:
+            if struc[i] < struc[i + 1]:
                 vector[i][1] = 1
-            if icshape[i] >= 0.233:
+            if struc[i] >= 0.233:
                 vector[i][4] = 1
-            if icshape[i + 1] >= 0.233:
+            if struc[i + 1] >= 0.233:
                 vector[i][5] = 1
 
-        if icshape[i] != -1 and icshape[i + 1] == -1:
+        if struc[i] != -1 and struc[i + 1] == -1:
             vector[i][2] = 1
-            if icshape[i] >= 0.233:
+            if struc[i] >= 0.233:
                 vector[i][4] = 1
-        if icshape[i] == -1 and icshape[i + 1] != -1:
+        if struc[i] == -1 and struc[i + 1] != -1:
             vector[i][3] = 1
-            if icshape[i + 1] >= 0.233:
+            if struc[i + 1] >= 0.233:
                 vector[i][5] = 1
 
-        if icshape[i] == -1 and icshape[i + 1] == -1:
+        if struc[i] == -1 and struc[i + 1] == -1:
             for j in range(0, 6):
                 vector[i][j] = -1
 
     return vector
 
-def dealwithdata(protein):
-    seqP = []
+def dealwithdata(seq, struc):
     dataX = []
     dataX2 = []
-    icshapeP = []
-    with open('../dataset/' + protein + '/positive_seq') as f:
-        for line in f:
-            if '>' not in line:
-                seqP.append(line.strip())
-    with open('../dataset/' + protein + '/positive_str') as f:
-        for line in f:
-            row = []
-            lines = line.strip().split("\t")
-            for x in lines:
-                row.append(float(x))
-            icshapeP.append(row)
-    for i in range(len(icshapeP)):
-        dataX.append(coden(seqP[i]))
-        dataX2.append(icshapeDS(seqP[i], icshapeP[i]))
-
-    dataX = np.array(dataX)[indexes]
+    dataX.append(coden(seq))
+    dataX2.append(icshapeDS(seq, struc))
+    
+    dataX = np.array(dataX)
     dataX = dataX[:, np.newaxis, :]
-    dataX2 = np.array(dataX2)[indexes]
+    dataX2 = np.array(dataX2)
     dataX2 = dataX2[:, np.newaxis, :]
 
     return dataX, dataX2
 
 def diPaRIS():
     # input
-    left_input = keras.layers.Input(shape=(1, 101, 4), name='left_input')
-    right_input = keras.layers.Input(shape=(1, 100, 7), name='right_input')
+    left_input = Input(shape=(1, 101, 4), name='left_input')
+    right_input = Input(shape=(1, 100, 7), name='right_input')
     left_conv = keras.layers.Conv2D(64, (6, 4), padding="same")(left_input)
     left_norm = keras.layers.BatchNormalization()(left_conv)
     left_act = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None,
@@ -174,68 +159,46 @@ def diPaRIS():
     A7 = keras.layers.Activation('relu')(A7)
     A7 = keras.layers.Conv2D(256, (3, 3), padding="same")(A7)
     A7 = keras.layers.Activation('relu')(A7)
+    A8 = keras.layers.MaxPooling2D(pool_size=(1, 2), strides=None, padding='valid', data_format=None)(A7)
+    A8 = keras.layers.BatchNormalization()(A8)
+    A8 = keras.layers.Dropout(0.3)(A8)
 
-    A7 = keras.backend.squeeze(A7, axis=1)
-    A7 = keras.layers.Conv1D(filters=256, kernel_size=3, padding="same")(A7)
-    A7 = keras.layers.Activation('relu')(A7)
-    A7 = keras.layers.Conv1D(filters=256, kernel_size=3, padding="same")(A7)
-    A7 = keras.layers.Activation('relu')(A7)
+    A1 = keras.backend.squeeze(A2, axis=1)
+    A11 = keras_nlp.layers.TransformerEncoder(32, 32, 0.3)(A1)
+    A11 = keras_nlp.layers.TransformerEncoder(32, 32, 0.3)(A11)
+    A11 = keras_nlp.layers.TransformerEncoder(32, 32, 0.3)(A11)
+    A11 = keras.layers.multiply([A1, A11])
+    A3 = keras.backend.squeeze(A3, axis=1)
+    A13 = keras_nlp.layers.TransformerEncoder(64, 64, 0.3)(A3)
+    A13 = keras_nlp.layers.TransformerEncoder(64, 64, 0.3)(A13)
+    A13 = keras_nlp.layers.TransformerEncoder(64, 64, 0.3)(A13)
+    A13 = keras.layers.multiply([A3, A13])
+    A5 = keras.backend.squeeze(A5, axis=1)
+    A15 = keras_nlp.layers.TransformerEncoder(128, 128, 0.3)(A5)
+    A15 = keras_nlp.layers.TransformerEncoder(128, 128, 0.3)(A15)
+    A15 = keras_nlp.layers.TransformerEncoder(128, 128, 0.3)(A15)
+    A15 = keras.layers.multiply([A5, A15])
 
-    # up-sample
-    A8 = keras.layers.Conv1DTranspose(filters=128, kernel_size=3, strides=2, padding="same")(A7)
-    A8 = keras.layers.LayerNormalization()(A8)
-    A8 = keras.layers.Activation('relu')(A8)
-    A8 = Concatenate(axis=-1)([A8, A15])
-    A8 = keras.layers.Conv1D(filters=128, kernel_size=3, padding="same")(A8)
-    A8 = keras.layers.Activation('relu')(A8)
-    A8 = keras.layers.Conv1D(filters=128, kernel_size=3, padding="same")(A8)
-    A8 = keras.layers.Activation('relu')(A8)
-    A8 = keras.layers.LayerNormalization()(A8)
+    inputs = keras.layers.Concatenate(axis=-2)([A1, A3, A5])
+    # final
+    outputs = keras.layers.Dense(1, activation='sigmoid')(inputs)
+    model = keras.Model(inputs=[left_input, right_input], outputs=outputs)
 
-    A9 = keras.layers.Conv1DTranspose(filters=64, kernel_size=3, strides=2, padding="valid")(A8)
-    A9 = keras.layers.LayerNormalization()(A9)
-    A9 = keras.layers.Activation('relu')(A9)
-    A9 = Concatenate(axis=-1)([A9, A13])
-    A9 = keras.layers.Conv1D(filters=64, kernel_size=3, padding="same")(A9)
-    A9 = keras.layers.Activation('relu')(A9)
-    A9 = keras.layers.Conv1D(filters=64, kernel_size=3, padding="same")(A9)
-    A9 = keras.layers.Activation('relu')(A9)
-    A9 = keras.layers.LayerNormalization()(A9)
+    return model
 
-    A0 = keras.layers.Conv1DTranspose(filters=32, kernel_size=3, strides=2, padding="same")(A9)
-    A0 = keras.layers.LayerNormalization()(A0)
-    A0 = keras.layers.Activation('relu')(A0)
-    A0 = Concatenate(axis=-1)([A0, A11])
-    A0 = keras.layers.Conv1D(filters=32, kernel_size=3, padding="same")(A0)
-    A0 = keras.layers.Activation('relu')(A0)
-    A0 = keras.layers.Conv1D(filters=32, kernel_size=3, padding="same")(A0)
-    A = keras.layers.Activation('relu')(A0)
-    # classify
-    stack1 = keras.layers.LayerNormalization()(A)
-    stack2 = keras.layers.AveragePooling1D(pool_size=int(stack1.shape[1]))(stack1)
-    stack3 = keras.layers.AveragePooling1D(40)(stack1)
-    stack4 = keras.layers.AveragePooling1D(8)(stack1)
-    stack6 = Concatenate(axis=1)([stack2, stack3, stack4])
-    stack7 = GlobalExpectationPooling1D(mode=0, m_trainable=False, m_value=1)(stack6)
-    output = keras.layers.Dense(2, activation="softmax")(stack7)
-    return Model(inputs=[left_input, right_input], outputs=[output])
+def train_model(seq, struc):
+    dataX, dataX2 = dealwithdata(seq, struc)
+    
+    # Define the model
+    model = diPaRIS()
+    model.compile(optimizer=Adam(learning_rate=1e-5), loss='binary_crossentropy', metrics=['accuracy'])
 
-def main():
-    parser = argparse.ArgumentParser(description="Load a trained U_Transformer model and make predictions.")
-    parser.add_argument('--protein', type=str, default='DDX3X-HepG2_TGFB1', help='The protein dataset to use for training and prediction')
-    args = parser.parse_args()
-
-    protein = args.protein
-    print(f"Using dataset: {protein}")
-
-    trainX, trainX2 = dealwithdata(protein)
-
-    model = U_Transformer()
-    print(f"Loading previous best weights for {protein}")
-    model.load_weights(f'../new2/Utransformer_weights_{protein}.h5')
-
-    prediction = model.predict([trainX, trainX2])[:, 1]
-    print(prediction, protein)
+    # Fit the model
+    model.fit([dataX, dataX2], dataY, epochs=100, batch_size=32, validation_split=0.2)
 
 if __name__ == "__main__":
-    main()
+    # Example sequences and structures
+    example_seq = "TGTTGATTTTATTTGACCCCTGGAGTGGTGGGTCTCATCTTTCCCATCTCGCCTGAGAGCGGCTGAGGGCTGCCTCACTGCAAATCCTCCCCACAGCGTCA"
+    example_struc = [0.213,0.298,0.27,0.313,0.355,0.253,0.421,0.562,0.8,0.934,0.877,1,0.952,0.529,0.208,0.026,0.003,0.04,0.095,0.123,0.26,0.59,0.984,0.906,1,0.272,0.258,0.56,0.002,0.313,0.202,0.366,0.447,0.611,0.97,1,1,0.702,0.972,1,1,0.35,0.215,0.391,0.567,0.595,0.31,0.757,0.73,0.54,0.541,0.134,0.31,0.433,0.46,0.161,1,0.393,0.515,0.665,0.832,0.45,0.921,0.572,0.245,0.205,0.617,0.164,0.136,0.246,0.193,0.055,0.082,0.068,0.068,0.152,0.194,0.291,0.18,0.208,0.348,0.71,0.64,0.473,0.306,0.21,0.168,0.182,0.029,0.084,0.183,0.169,0.281,0.379,0.281,0.339,0.24,0.465,0.128,0.198,0.242
+]  # Example structure data
+    train_model(example_seq, example_struc)
