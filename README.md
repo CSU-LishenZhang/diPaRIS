@@ -1,7 +1,4 @@
-The structure and flow of your documentation are clear and well-organized. Here’s a refined version of the "diPaRIS" description for enhanced clarity and smooth flow:
-﻿
----
-﻿
+
 # diPaRIS: Dynamic and Interpretable Protein-RNA Interactions Prediction with U-shaped Network and Novel Structure Coding
 ﻿
 ## Introduction
@@ -31,6 +28,7 @@ The package is supported on *Linux* and has been tested on the following systems
 - NumPy >= 1.23.5
 - TensorFlow-GPU == 2.10.1
 - Keras-NLP == 0.4.1
+- argparse >= 1.4.0
 ﻿
 ## Installation
 1. **Clone the repository:**
@@ -70,25 +68,45 @@ pip install -r requirements.txt
 - code/diPaRIS_predict.py -- Example script for predicting binding sites using diPaRIS.
 ```
 ﻿  
-##  1. How to train a model using diPaRIS
+##  Steps required to train a model using diPaRIS
 You can train the model and test it with 5-fold cross-validation in a very simple way by run `diPaRIS_train.py` under the `/code` directory.
-### Step-by-step description of full demo is as follows：
-1. Load libraries.
-```python
-import math
-import keras_nlp
-import numpy as np
-...
+
+Use default dataset:
+```bash
+python diPaRIS_train.py
 ```
-2. Load Data in current environment.
+Using custom datasets:
+```bash
+python diPaRIS_train.py -d YourDataset1 YourDataset2
+```
+
+### Step-by-step description of full demo is as follows：
+#### 1. **Environment Setup and Imports**
+This step involves setting up the necessary environment and importing essential libraries like `Keras`, `sklearn`, and `numpy`. This section also includes GPU configuration settings to optimize the training process.
+
+#### 2. **Data Preprocessing Functions**
+These functions handle loading and processing the input sequences and structure information:
+- **`coden(seq)`**: Converts RNA sequences to one-hot encoded vectors.
+- **`chunks_two(seq, win)`**: Splits sequences into subsequences of length `win` (used later for generating k-mer probabilities).
+- **`icshapeDS(seq, icshape)`**: Generates feature vectors using RNA sequence and icSHAPE data (probability-based and other structural features).
+
+#### 3. **Loading and Preparing the Dataset**
+The `dealwithdata(protein)` function is responsible for loading the positive and negative sequences along with the structural information. It preprocesses the data and returns train-test splits for both sequence and icSHAPE data.
+
+#### 4. **Model Construction**
+The `diPaRIS()` function defines the neural network architecture. This includes:
+- Convolutional layers for feature extraction
+- Bidirectional LSTM layers
+- Transformer encoder layers
+- Up-sampling and classification layers
+
+#### 5. **Model Training and Cross-Validation**
+The `main()` function handles the training process, performing K-Fold cross-validation, compiling the model, training it, and evaluating the performance. It also computes key metrics such as accuracy, precision, recall, F1-score, AUC, and AUPR.
+You can replace the hardcoded dataset (AKAP1-HepG2) with a function parameter or command-line argument. 
+
+## A guide to utilising diPaRIS for the prediction of binding sites
 
 
-## There are some parameters you can set in the diPaRIS.py file as needed:
-In the function `dealwithdata`, you can set the *data path* for diPaRIS. The default path is located under `'../dataset/' + protein + '/'`. Adjust this path as needed for your data setup. 
-
-In the function `main`, you can set the *storage path* for trained diPaRIS models. The default path is under the working directory. Adjust this path in the `model.save`, `os.path.exists`, and `model.load_weights` functions as needed for your data setup. This ensures that your model can be saved and loaded correctly.
-
-In the function `main`, you can set the *dataset name* for diPaRIS. The default dataset is `AKAP1-HepG2`. Adjust this name as needed for your data setup. You can also prepare the dataset yourself. The data required for diPaRIS prediction is illustrated in `/AKAP1-HepG2`.
 
 ## License
 
