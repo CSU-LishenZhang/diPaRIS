@@ -273,9 +273,9 @@ def main(protein_list):
             model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
             # Load previous weights if available
-            if os.path.exists(f'model/diPaRIS_{protein}.h5'):
+            if os.path.exists(f'../model/diPaRIS_{protein}.h5'):
                 print(f"Loading previous best weights for model: {protein}")
-                model.load_weights(f'model/diPaRIS_{protein}.h5')
+                model.load_weights(f'../model/diPaRIS_{protein}.h5')
 
             def step_decay(epoch):
                 initial_lrate = 0.0005
@@ -289,7 +289,7 @@ def main(protein_list):
                          LearningRateScheduler(step_decay)]
             history = model.fit(train_X, train_y, batch_size=16, epochs=64, verbose=0, validation_data=(eval_X, eval_y),
                                 callbacks=callbacks)
-            model.save(f'model/diPaRIS_{protein}.h5')
+            model.save(f'../model/diPaRIS_{protein}.h5')
 
             prediction = model.predict(test_X)[:, 1]
             aucs = roc_auc_score(test_y, prediction)
