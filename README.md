@@ -1,6 +1,5 @@
 # diPaRIS: Dynamic and Interpretable Protein-RNA Interactions Prediction with U-shaped Network and Novel Structure Coding
-﻿
-## Introduction
+ ## Introduction
 Dynamic protein-RNA interactions are fundamental to various biological processes and disease development. These interactions occur at specific RNA binding sites, often influenced by the structural patterns of nucleotides. While existing computational methods incorporate RNA structural data in vivo, they often fail to capture the full context of nucleotide interactions, limiting their accuracy.
 ﻿
 
@@ -8,14 +7,10 @@ We introduce **diPaRIS**, a deep learning framework designed to predict dynamic 
 ﻿
 
 This repository includes the source code for both model training and prediction, along with an example dataset for demonstration purposes.
-﻿
-### diPaRIS Overview
+﻿### diPaRIS Overview
 <img src="https://github.com/CSU-LishenZhang/diPaRIS/blob/main/Overview.jpg" alt="diPaRIS Overview" width="1000"/>
-
-﻿
 ## Getting Started
-﻿
-### Hardware Requirements
+ ### Hardware Requirements
 The `diPaRIS` package runs efficiently on standard computers with sufficient RAM for handling in-memory operations. However, for faster computations—especially during model training and large-scale inference—using a GPU is highly recommended.
 ﻿
 ### OS Requirements
@@ -53,8 +48,7 @@ pip install -r requirements.txt
 - Dependency installation may take 5 to 15 minutes, depending on your network speed.
 ﻿
 ## Usage
-﻿
-### Directory Structure:
+ ### Directory Structure:
 ```
 - Overview.jpg -- Overview of the diPaRIS architecture.
 - requirements.txt -- List of required packages and their versions.
@@ -69,8 +63,7 @@ pip install -r requirements.txt
 - code/diPaRIS_train.py -- Example script for training a model using diPaRIS.
 - code/diPaRIS_predict.py -- Example script for predicting binding sites using diPaRIS.
 ```
-﻿  
-##  Steps required to train a model using diPaRIS
+ ##  Steps required to train a model using diPaRIS
 You can train the model and test it with 5-fold cross-validation in a very simple way by run `diPaRIS_train.py` under the `/code` directory.
 
 **Example Command:**
@@ -78,8 +71,7 @@ You can train the model and test it with 5-fold cross-validation in a very simpl
 ```bash
 python diPaRIS_train.py -d YourDataset
 ```
-**Note:** 
-If the `-d` parameter is not specified, the program will automatically train on the default dataset (`AKAP1-HepG2`). 
+- `-d`: Specifies the dataset for training (optional). If the `-d` parameter is not provided, the program will automatically train on the default dataset (`AKAP1-HepG2`).
 
 ### Step-by-step description of full demo is as follows：
 #### 1. **Environment Setup and Imports**
@@ -103,10 +95,6 @@ The `diPaRIS()` function defines the neural network architecture. This includes:
 
 #### 5. **Model Training and Cross-Validation**
 The `main()` function handles the training process, performing K-Fold cross-validation, compiling the model, training it, and evaluating the performance. It also computes key metrics such as accuracy, precision, recall, F1-score, AUC, and AUPR.
-
-Here is a refined version of your guide for predicting binding sites using diPaRIS:
-
----
 
 ## A Guide to Utilizing diPaRIS for the Prediction of Binding Sites
 
