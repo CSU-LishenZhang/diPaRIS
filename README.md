@@ -104,14 +104,26 @@ The `diPaRIS()` function defines the neural network architecture. This includes:
 #### 5. **Model Training and Cross-Validation**
 The `main()` function handles the training process, performing K-Fold cross-validation, compiling the model, training it, and evaluating the performance. It also computes key metrics such as accuracy, precision, recall, F1-score, AUC, and AUPR.
 
-## A guide to utilising diPaRIS for the prediction of binding sites
-You can predict a binding site using diPaRIS in a very simple way by run `diPaRIS_predict.py` under the `/code` directory.
+Here is a refined version of your guide for predicting binding sites using diPaRIS:
 
-Example:
+---
+
+## A Guide to Utilizing diPaRIS for the Prediction of Binding Sites
+
+You can easily predict a binding site using diPaRIS by running the `diPaRIS_predict.py` script located in the `/code` directory.
+
+**Example Command:**
+
 ```bash
 python diPaRIS_predict.py --seq "Sequence of binding sites" --struc "Structure of binding sites" --protein "AKAP1-HepG2"
 ```
-If the ` -- protein ` parameter is not specified, the program will traverse all datasets for prediction.
+
+- `--seq`: The sequence of the binding sites you want to predict. Binding sites should be standardized to fragments of 101 nucleotides.
+- `--struc`: The structure data corresponding to the sequence of the binding sites.
+- `--protein`: The specific protein dataset for the prediction (optional).
+
+**Note:**  
+If the `--protein` parameter is not specified, the program will automatically traverse and make predictions across all available datasets.
 
 
 ## License
