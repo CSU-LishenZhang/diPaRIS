@@ -98,7 +98,8 @@ The `main()` function handles the training process, performing K-Fold cross-vali
 
 ## A Guide to Utilizing diPaRIS for the Prediction of Binding Sites
 
-You can easily predict a binding site using diPaRIS by running the `diPaRIS_predict.py` script located in the `/code` directory.
+You can easily predict a binding site using diPaRIS by running the `diPaRIS_predict.py` script located in the `/code` directory with pre-trained diPaRIS models. The pre-trained diPaRIS models available for all 44 datasets described in our paper can be conveniently downloaded from Zenodo:  
+[![Open in Zenodo](https://about.zenodo.org/static/img/logos/zenodo-gradient-square.svg)](https://doi.org/10.5281/zenodo.13895077)
 
 **Example Command:**
 
