@@ -186,7 +186,7 @@ def diPaRIS():
 
     return model
 
-def train_model(seq, struc):
+def main(seq, struc):
     dataX, dataX2 = dealwithdata(seq, struc)
     
     # Define the model
@@ -201,4 +201,4 @@ if __name__ == "__main__":
     example_seq = "TGTTGATTTTATTTGACCCCTGGAGTGGTGGGTCTCATCTTTCCCATCTCGCCTGAGAGCGGCTGAGGGCTGCCTCACTGCAAATCCTCCCCACAGCGTCA"
     example_struc = [0.213,0.298,0.27,0.313,0.355,0.253,0.421,0.562,0.8,0.934,0.877,1,0.952,0.529,0.208,0.026,0.003,0.04,0.095,0.123,0.26,0.59,0.984,0.906,1,0.272,0.258,0.56,0.002,0.313,0.202,0.366,0.447,0.611,0.97,1,1,0.702,0.972,1,1,0.35,0.215,0.391,0.567,0.595,0.31,0.757,0.73,0.54,0.541,0.134,0.31,0.433,0.46,0.161,1,0.393,0.515,0.665,0.832,0.45,0.921,0.572,0.245,0.205,0.617,0.164,0.136,0.246,0.193,0.055,0.082,0.068,0.068,0.152,0.194,0.291,0.18,0.208,0.348,0.71,0.64,0.473,0.306,0.21,0.168,0.182,0.029,0.084,0.183,0.169,0.281,0.379,0.281,0.339,0.24,0.465,0.128,0.198,0.242
 ]  # Example structure data
-    train_model(example_seq, example_struc)
+    main(example_seq, example_struc)
