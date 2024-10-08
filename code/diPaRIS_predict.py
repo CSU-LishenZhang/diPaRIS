@@ -83,13 +83,15 @@ def icshapeDS(seq, struc):
 def dealwithdata(seq, struc):
     dataX = []
     dataX2 = []
-    dataX.append(coden(seq))
-    dataX2.append(icshapeDS(seq, struc))
+    
+    for seq, struc in zip(seq_list, struc_list):  # 遍历多行输入
+        dataX.append(coden(seq))
+        dataX2.append(icshapeDS(seq, struc))
     
     dataX = np.array(dataX)
-    dataX = dataX[:, np.newaxis, :]
+    dataX = dataX[:, np.newaxis, :] 
     dataX2 = np.array(dataX2)
-    dataX2 = dataX2[:, np.newaxis, :]
+    dataX2 = dataX2[:, np.newaxis, :] 
 
     return dataX, dataX2
 
@@ -186,19 +188,47 @@ def diPaRIS():
 
     return model
 
-def main(seq, struc):
-    dataX, dataX2 = dealwithdata(seq, struc)
-    
-    # Define the model
-    model = diPaRIS()
-    model.compile(optimizer=Adam(learning_rate=1e-5), loss='binary_crossentropy', metrics=['accuracy'])
+protein_list = {
+    0: 'AKAP1-HepG2', 1: 'AQR-HepG2', 2: 'AQR-K562', 3: 'BCLAF1-HepG2', 4: 'BUD13-HepG2',
+    5: 'BUD13-K562', 6: 'DDX24-K562', 7: 'DDX3X-HepG2', 8: 'DDX3X-K562', 9: 'EFTUD2-HepG2',
+    10: 'EFTUD2-K562', 11: 'FAM120A-K562', 12: 'FMR1-K562', 13: 'FXR2-K562', 14: 'G3BP1-HepG2',
+    15: 'GRWD1-HepG2', 16: 'GRWD1-K562', 17: 'IGF2BP1-K562', 18: 'IGF2BP2-K562', 19: 'LARP4-HepG2',
+    20: 'LIN28B-K562', 21: 'METAP2-K562', 22: 'PABPC4-K562', 23: 'PABPN1-HepG2', 24: 'PCBP2-HepG2',
+    25: 'PPIG-HepG2', 26: 'PRPF8-HepG2', 27: 'PRPF8-K562', 28: 'PUM1-K562', 29: 'PUM2-K562',
+    30: 'RBM15-K562', 31: 'RPS3-HepG2', 32: 'RPS3-K562', 33: 'SF3B4-HepG2', 34: 'SF3B4-K562',
+    35: 'SND1-HepG2', 36: 'SND1-K562', 37: 'SUB1-HepG2', 38: 'UCHL5-K562', 39: 'UPF1-HepG2',
+    40: 'UPF1-K562', 41: 'YBX3-K562', 42: 'ZNF622-K562', 43: 'ZNF800-K562'
+}
 
-    # Fit the model
-    model.fit([dataX, dataX2], dataY, epochs=100, batch_size=32, validation_split=0.2)
+def predict_with_model(model, seq, struc, protein_name):
+    dataX, dataX2 = dealwithdata(seq, struc)
+    prediction = model.predict([dataX, dataX2])[:, 1]
+    print(f"Prediction for {protein_name}: {prediction}")
+    return prediction
+
+def main(seq, struc, protein=None):
+    if protein:
+        # 预测指定数据集
+        if protein in protein_list.values():
+            print(f"Using model trained on {protein}")
+            model = diPaRIS()
+            model.load_weights(f'model/diPaRIS_{protein}.h5')# 此处应加载指定数据集的预训练模型
+            return predict_with_model(model, seq, struc, protein)
+        else:
+            print(f"Specified dataset '{protein}' is not in the list.")
+    else:
+        # 预测所有数据集
+        for key, protein_name in protein_list.items():
+            print(f"Using model trained on {protein_name}")
+            model = diPaRIS()  
+            model.load_weights(f'model/diPaRIS_{protein_name}.h5')# 此处应加载每个数据集对应的预训练模型
+            predict_with_model(model, seq, struc, protein_name)
 
 if __name__ == "__main__":
-    # Example sequences and structures
-    example_seq = "TGTTGATTTTATTTGACCCCTGGAGTGGTGGGTCTCATCTTTCCCATCTCGCCTGAGAGCGGCTGAGGGCTGCCTCACTGCAAATCCTCCCCACAGCGTCA"
-    example_struc = [0.213,0.298,0.27,0.313,0.355,0.253,0.421,0.562,0.8,0.934,0.877,1,0.952,0.529,0.208,0.026,0.003,0.04,0.095,0.123,0.26,0.59,0.984,0.906,1,0.272,0.258,0.56,0.002,0.313,0.202,0.366,0.447,0.611,0.97,1,1,0.702,0.972,1,1,0.35,0.215,0.391,0.567,0.595,0.31,0.757,0.73,0.54,0.541,0.134,0.31,0.433,0.46,0.161,1,0.393,0.515,0.665,0.832,0.45,0.921,0.572,0.245,0.205,0.617,0.164,0.136,0.246,0.193,0.055,0.082,0.068,0.068,0.152,0.194,0.291,0.18,0.208,0.348,0.71,0.64,0.473,0.306,0.21,0.168,0.182,0.029,0.084,0.183,0.169,0.281,0.379,0.281,0.339,0.24,0.465,0.128,0.198,0.242
-]  # Example structure data
-    main(example_seq, example_struc)
+    parser = argparse.ArgumentParser(description='diPaRIS Prediction')
+    parser.add_argument('--seq', type=str, required=True, help='Input sequence')
+    parser.add_argument('--struc', type=float, nargs='+', required=True, help='Input structure data')
+    parser.add_argument('--protein', type=str, help='Protein dataset to use (optional)')
+    args = parser.parse_args()
+
+    main(args.seq, args.struc, args.protein)
