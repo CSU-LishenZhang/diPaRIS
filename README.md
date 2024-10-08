@@ -10,6 +10,7 @@ This repository includes the source code for both model training and prediction,
  
  ### diPaRIS Overview
 <img src="https://github.com/CSU-LishenZhang/diPaRIS/blob/main/Overview.jpg" alt="diPaRIS Overview" width="1000"/>
+
 ## Getting Started
  ### Hardware Requirements
 The `diPaRIS` package runs efficiently on standard computers with sufficient RAM for handling in-memory operations. However, for faster computations—especially during model training and large-scale inference—using a GPU is highly recommended.
