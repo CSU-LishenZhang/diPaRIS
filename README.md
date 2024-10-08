@@ -10,7 +10,8 @@ We introduce **diPaRIS**, a deep learning framework designed to predict dynamic 
 This repository includes the source code for both model training and prediction, along with an example dataset for demonstration purposes.
 ﻿
 ### diPaRIS Overview
-![alt text](https://github.com/CSU-LishenZhang/diPaRIS/blob/main/Overview.jpg)
+<img src="https://github.com/CSU-LishenZhang/diPaRIS/blob/main/Overview.jpg" alt="diPaRIS Overview" width="1000"/>
+
 ﻿
 ## Getting Started
 ﻿
