@@ -72,14 +72,13 @@ pip install -r requirements.txt
 ##  Steps required to train a model using diPaRIS
 You can train the model and test it with 5-fold cross-validation in a very simple way by run `diPaRIS_train.py` under the `/code` directory.
 
-Use default dataset:
+**Example Command:**
+
 ```bash
-python diPaRIS_train.py
+python diPaRIS_train.py -d YourDataset
 ```
-Using custom datasets:
-```bash
-python diPaRIS_train.py -d YourDataset1 YourDataset2
-```
+**Note:** 
+If the `-d` parameter is not specified, the program will automatically train on the default dataset (`AKAP1-HepG2`). 
 
 ### Step-by-step description of full demo is as follows：
 #### 1. **Environment Setup and Imports**
