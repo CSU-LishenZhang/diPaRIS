@@ -97,8 +97,8 @@ def dealwithdata(seq, struc):
 
 def diPaRIS():
     # input
-    left_input = Input(shape=(1, 101, 4), name='left_input')
-    right_input = Input(shape=(1, 100, 7), name='right_input')
+    left_input = keras.layers.Input(shape=(1, 101, 4), name='left_input')
+    right_input = keras.layers.Input(shape=(1, 100, 7), name='right_input')
     left_conv = keras.layers.Conv2D(64, (6, 4), padding="same")(left_input)
     left_norm = keras.layers.BatchNormalization()(left_conv)
     left_act = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None,
@@ -161,32 +161,51 @@ def diPaRIS():
     A7 = keras.layers.Activation('relu')(A7)
     A7 = keras.layers.Conv2D(256, (3, 3), padding="same")(A7)
     A7 = keras.layers.Activation('relu')(A7)
-    A8 = keras.layers.MaxPooling2D(pool_size=(1, 2), strides=None, padding='valid', data_format=None)(A7)
-    A8 = keras.layers.BatchNormalization()(A8)
-    A8 = keras.layers.Dropout(0.3)(A8)
 
-    A1 = keras.backend.squeeze(A2, axis=1)
-    A11 = keras_nlp.layers.TransformerEncoder(32, 32, 0.3)(A1)
-    A11 = keras_nlp.layers.TransformerEncoder(32, 32, 0.3)(A11)
-    A11 = keras_nlp.layers.TransformerEncoder(32, 32, 0.3)(A11)
-    A11 = keras.layers.multiply([A1, A11])
-    A3 = keras.backend.squeeze(A3, axis=1)
-    A13 = keras_nlp.layers.TransformerEncoder(64, 64, 0.3)(A3)
-    A13 = keras_nlp.layers.TransformerEncoder(64, 64, 0.3)(A13)
-    A13 = keras_nlp.layers.TransformerEncoder(64, 64, 0.3)(A13)
-    A13 = keras.layers.multiply([A3, A13])
-    A5 = keras.backend.squeeze(A5, axis=1)
-    A15 = keras_nlp.layers.TransformerEncoder(128, 128, 0.3)(A5)
-    A15 = keras_nlp.layers.TransformerEncoder(128, 128, 0.3)(A15)
-    A15 = keras_nlp.layers.TransformerEncoder(128, 128, 0.3)(A15)
-    A15 = keras.layers.multiply([A5, A15])
+    A7 = keras.backend.squeeze(A7, axis=1)
+    A7 = keras.layers.Conv1D(filters=256, kernel_size=3, padding="same")(A7)
+    A7 = keras.layers.Activation('relu')(A7)
+    A7 = keras.layers.Conv1D(filters=256, kernel_size=3, padding="same")(A7)
+    A7 = keras.layers.Activation('relu')(A7)
 
-    inputs = keras.layers.Concatenate(axis=-2)([A1, A3, A5])
-    # final
-    outputs = keras.layers.Dense(1, activation='sigmoid')(inputs)
-    model = keras.Model(inputs=[left_input, right_input], outputs=outputs)
+    # up-sample
+    A8 = keras.layers.Conv1DTranspose(filters=128, kernel_size=3, strides=2, padding="same")(A7)
+    A8 = keras.layers.LayerNormalization()(A8)
+    A8 = keras.layers.Activation('relu')(A8)
+    A8 = Concatenate(axis=-1)([A8, A15])
+    A8 = keras.layers.Conv1D(filters=128, kernel_size=3, padding="same")(A8)
+    A8 = keras.layers.Activation('relu')(A8)
+    A8 = keras.layers.Conv1D(filters=128, kernel_size=3, padding="same")(A8)
+    A8 = keras.layers.Activation('relu')(A8)
+    A8 = keras.layers.LayerNormalization()(A8)
 
-    return model
+    A9 = keras.layers.Conv1DTranspose(filters=64, kernel_size=3, strides=2, padding="valid")(A8)
+    A9 = keras.layers.LayerNormalization()(A9)
+    A9 = keras.layers.Activation('relu')(A9)
+    A9 = Concatenate(axis=-1)([A9, A13])
+    A9 = keras.layers.Conv1D(filters=64, kernel_size=3, padding="same")(A9)
+    A9 = keras.layers.Activation('relu')(A9)
+    A9 = keras.layers.Conv1D(filters=64, kernel_size=3, padding="same")(A9)
+    A9 = keras.layers.Activation('relu')(A9)
+    A9 = keras.layers.LayerNormalization()(A9)
+
+    A0 = keras.layers.Conv1DTranspose(filters=32, kernel_size=3, strides=2, padding="same")(A9)
+    A0 = keras.layers.LayerNormalization()(A0)
+    A0 = keras.layers.Activation('relu')(A0)
+    A0 = Concatenate(axis=-1)([A0, A11])
+    A0 = keras.layers.Conv1D(filters=32, kernel_size=3, padding="same")(A0)
+    A0 = keras.layers.Activation('relu')(A0)
+    A0 = keras.layers.Conv1D(filters=32, kernel_size=3, padding="same")(A0)
+    A = keras.layers.Activation('relu')(A0)
+    # classify
+    stack1 = keras.layers.LayerNormalization()(A)
+    stack2 = keras.layers.AveragePooling1D(pool_size=int(stack1.shape[1]))(stack1)
+    stack3 = keras.layers.AveragePooling1D(40)(stack1)
+    stack4 = keras.layers.AveragePooling1D(8)(stack1)
+    stack6 = Concatenate(axis=1)([stack2, stack3, stack4])
+    stack7 = GlobalExpectationPooling1D(mode=0, m_trainable=False, m_value=1)(stack6)
+    output = keras.layers.Dense(2, activation="softmax")(stack7)
+    return Model(inputs=[left_input, right_input], outputs=[output])
 
 protein_list = {
     0: 'AKAP1-HepG2', 1: 'AQR-HepG2', 2: 'AQR-K562', 3: 'BCLAF1-HepG2', 4: 'BUD13-HepG2',
@@ -212,7 +231,7 @@ def main(seq, struc, protein=None):
         if protein in protein_list.values():
             print(f"Using model trained on {protein}")
             model = diPaRIS()
-            model.load_weights(f'model/diPaRIS_{protein}.h5')# 此处应加载指定数据集的预训练模型
+            model.load_weights(f'../model/diPaRIS_{protein}.h5')# 此处应加载指定数据集的预训练模型
             return predict_with_model(model, seq, struc, protein)
         else:
             print(f"Specified dataset '{protein}' is not in the list.")
@@ -221,7 +240,7 @@ def main(seq, struc, protein=None):
         for key, protein_name in protein_list.items():
             print(f"Using model trained on {protein_name}")
             model = diPaRIS()  
-            model.load_weights(f'model/diPaRIS_{protein_name}.h5')# 此处应加载每个数据集对应的预训练模型
+            model.load_weights(f'../model/diPaRIS_{protein_name}.h5')# 此处应加载每个数据集对应的预训练模型
             predict_with_model(model, seq, struc, protein_name)
 
 if __name__ == "__main__":
