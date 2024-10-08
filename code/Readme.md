@@ -1,3 +1,1 @@
-DiPaRIS is an end-to-end RBP binding site prediction framework. 
-
-To train diPaRIS, simply run `diPaRIS.py` in the directory.
+This folder contains the source code for both training and prediction tasks using diPaRIS. The file `ePooling.py` provides the source code for global expectation pooling in diPaRIS. The script `diPaRIS_train.py` is an example for training a model, while `diPaRIS_predict.py` is an example script for predicting binding sites using diPaRIS.
