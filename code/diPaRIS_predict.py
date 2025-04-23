@@ -95,116 +95,149 @@ def dealwithdata(seq, struc):
 
     return dataX, dataX2
 
+INITIALIZER = keras.initializers.HeNormal()  
+REGULARIZER = keras.regularizers.L2(1e-3)
+
+def conv2d_block(x, filters):
+    # first layer
+    shortcut = keras.layers.Conv2D(filters, 1, padding="same", kernel_initializer=INITIALIZER, 
+        )(x)
+    reduced_filters = filters // 4
+    x = keras.layers.Conv2D(reduced_filters, 1, padding="same", 
+        kernel_regularizer=REGULARIZER)(x)
+    x = keras.layers.PReLU()(x)
+    x = keras.layers.LayerNormalization()(x)
+    x = keras.layers.Conv2D(reduced_filters, 3, padding="same", kernel_initializer=INITIALIZER, 
+        )(x)
+    x = keras.layers.PReLU()(x)
+    x = keras.layers.Conv2D(reduced_filters, 3, padding="same", 
+        kernel_regularizer=REGULARIZER)(x)
+    x = keras.layers.PReLU()(x)
+    x = keras.layers.LayerNormalization()(x)
+    x = keras.layers.Conv2D(filters, 1, padding="same", kernel_initializer=INITIALIZER, 
+        )(x)
+    x = keras.layers.PReLU()(x)
+    x = keras.layers.add([shortcut, x])
+    return x
+
+def conv1d_block(x, filters):
+    shortcut = keras.layers.Conv1D(filters, 1, padding="same", kernel_initializer=INITIALIZER, 
+        )(x)
+    reduced_filters = filters // 4
+    x = keras.layers.Conv1D(reduced_filters, 1, padding="same", 
+        kernel_regularizer=REGULARIZER)(x)
+    x = keras.layers.PReLU()(x)
+    x = keras.layers.BatchNormalization()(x)
+    x = keras.layers.Conv1D(reduced_filters, 3, padding="same", kernel_initializer=INITIALIZER, 
+        )(x)
+    x = keras.layers.PReLU()(x)
+    x = keras.layers.Conv1D(reduced_filters, 3, padding="same", 
+        kernel_regularizer=REGULARIZER)(x)
+    x = keras.layers.PReLU()(x)
+    y = keras.layers.BatchNormalization()(x)
+    x = keras.layers.Conv1D(filters, 1, padding="same", kernel_initializer=INITIALIZER, 
+        kernel_regularizer=REGULARIZER)(x)
+    x = keras.layers.PReLU()(x)
+    x = keras.layers.add([shortcut, x])
+    return x
+
 def diPaRIS():
-    # input
+    #input
     left_input = keras.layers.Input(shape=(1, 101, 4), name='left_input')
     right_input = keras.layers.Input(shape=(1, 100, 7), name='right_input')
-    left_conv = keras.layers.Conv2D(64, (6, 4), padding="same")(left_input)
+    left_conv = keras.layers.Conv2D(64, (10, 4), padding="same", kernel_initializer=INITIALIZER, 
+        kernel_regularizer=REGULARIZER)(left_input)
     left_norm = keras.layers.BatchNormalization()(left_conv)
-    left_act = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None,
-                                  shared_axes=None)(left_norm)
+    left_act = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=None)(left_norm)
     left_sq = keras.backend.squeeze(left_act, axis=1)
     left_bilstm = keras.layers.Bidirectional(keras.layers.LSTM(32, return_sequences=True))(left_sq)
+    left_bilstm = keras.layers.Reshape((1, 101, 64))(left_bilstm)
     left_SE = keras.layers.multiply([left_act, left_bilstm])
+    left_SE = keras.layers.SpatialDropout2D(0.3)(left_SE)
 
-    right_conv = keras.layers.Conv2D(64, (10, 7), padding="same")(right_input)
+    right_conv = keras.layers.Conv2D(64, (16, 7), padding="same", kernel_initializer=INITIALIZER, 
+        kernel_regularizer=REGULARIZER)(right_input)
     right_norm = keras.layers.BatchNormalization()(right_conv)
-    right_act = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None,
-                                   shared_axes=None)(right_norm)
+    right_act = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=None)(right_norm)
     right_sq = keras.backend.squeeze(right_act, axis=1)
     right_bilstm = keras.layers.Bidirectional(keras.layers.LSTM(32, return_sequences=True))(right_sq)
+    right_bilstm = keras.layers.Reshape((1, 100, 64))(right_bilstm)
     right_SE = keras.layers.multiply([right_act, right_bilstm])
+    right_SE = keras.layers.SpatialDropout2D(0.3)(right_SE)
 
-    merge = keras.layers.Concatenate(axis=-2)([left_SE, right_SE])
-    # down-sample
-    A1 = keras.layers.Conv2D(32, (3, 3), padding="same")(merge)
-    A1 = keras.layers.Activation('relu')(A1)
-    A1 = keras.layers.Conv2D(32, (3, 3), padding="same")(A1)
-    A1 = keras.layers.Activation('relu')(A1)
+    merge = keras.layers.Concatenate(axis=2)([left_SE, right_SE])
+
+    # #down-sample
+    A1 = conv2d_block(merge, 32)
     A2 = keras.layers.MaxPooling2D(pool_size=(1, 2), strides=None, padding='valid', data_format=None)(A1)
     A2 = keras.layers.BatchNormalization()(A2)
-    A2 = keras.layers.Dropout(0.3)(A2)
+    A2 = keras.layers.SpatialDropout2D(0.3)(A2)
 
-    A3 = keras.layers.Conv2D(64, (3, 3), padding="same")(A2)
-    A3 = keras.layers.Activation('relu')(A3)
-    A3 = keras.layers.Conv2D(64, (3, 3), padding="same")(A3)
-    A3 = keras.layers.Activation('relu')(A3)
+    A3 = conv2d_block(A2, 64)
     A4 = keras.layers.MaxPooling2D(pool_size=(1, 2), strides=None, padding='valid', data_format=None)(A3)
     A4 = keras.layers.BatchNormalization()(A4)
-    A4 = keras.layers.Dropout(0.3)(A4)
+    A4 = keras.layers.SpatialDropout2D(0.3)(A4)
 
-    A5 = keras.layers.Conv2D(128, (3, 3), padding="same")(A4)
-    A5 = keras.layers.Activation('relu')(A5)
-    A5 = keras.layers.Conv2D(128, (3, 3), padding="same")(A5)
-    A5 = keras.layers.Activation('relu')(A5)
+    A5 = conv2d_block(A4, 128)
     A6 = keras.layers.MaxPooling2D(pool_size=(1, 2), strides=None, padding='valid', data_format=None)(A5)
     A6 = keras.layers.BatchNormalization()(A6)
-    A6 = keras.layers.Dropout(0.3)(A6)
-    # transformer
+    A6 = keras.layers.SpatialDropout2D(0.3)(A6)
+    # #transformer
     A1 = keras.backend.squeeze(A1, axis=1)
-    A11 = keras_nlp.layers.TransformerEncoder(32, 32, 0.3)(A1)
-    A11 = keras_nlp.layers.TransformerEncoder(32, 32, 0.3)(A11)
-    A11 = keras_nlp.layers.TransformerEncoder(32, 32, 0.3)(A11)
+    A11 = keras.layers.MultiHeadAttention(num_heads=4, key_dim=8, dropout=0.3)(A1, A1)
     A11 = keras.layers.multiply([A1, A11])
     A3 = keras.backend.squeeze(A3, axis=1)
-    A13 = keras_nlp.layers.TransformerEncoder(64, 64, 0.3)(A3)
-    A13 = keras_nlp.layers.TransformerEncoder(64, 64, 0.3)(A13)
-    A13 = keras_nlp.layers.TransformerEncoder(64, 64, 0.3)(A13)
+    A13 = keras.layers.MultiHeadAttention(num_heads=2, key_dim=32, dropout=0.3)(A3, A3)
     A13 = keras.layers.multiply([A3, A13])
     A5 = keras.backend.squeeze(A5, axis=1)
-    A15 = keras_nlp.layers.TransformerEncoder(128, 128, 0.3)(A5)
-    A15 = keras_nlp.layers.TransformerEncoder(128, 128, 0.3)(A15)
-    A15 = keras_nlp.layers.TransformerEncoder(128, 128, 0.3)(A15)
+    A15 = keras.layers.MultiHeadAttention(num_heads=1, key_dim=128, dropout=0.3)(A5, A5)
     A15 = keras.layers.multiply([A5, A15])
-
-    A7 = keras.layers.Conv2D(256, (3, 3), padding="same")(A6)
-    A7 = keras.layers.Activation('relu')(A7)
-    A7 = keras.layers.Conv2D(256, (3, 3), padding="same")(A7)
-    A7 = keras.layers.Activation('relu')(A7)
-
+    #bottle-neck
+    A7 = conv2d_block(A6, 256)
+    
     A7 = keras.backend.squeeze(A7, axis=1)
-    A7 = keras.layers.Conv1D(filters=256, kernel_size=3, padding="same")(A7)
-    A7 = keras.layers.Activation('relu')(A7)
-    A7 = keras.layers.Conv1D(filters=256, kernel_size=3, padding="same")(A7)
-    A7 = keras.layers.Activation('relu')(A7)
-
-    # up-sample
+    A7 = conv1d_block(A7, 256)
+    # #up-sample
     A8 = keras.layers.Conv1DTranspose(filters=128, kernel_size=3, strides=2, padding="same")(A7)
     A8 = keras.layers.LayerNormalization()(A8)
     A8 = keras.layers.Activation('relu')(A8)
-    A8 = Concatenate(axis=-1)([A8, A15])
-    A8 = keras.layers.Conv1D(filters=128, kernel_size=3, padding="same")(A8)
-    A8 = keras.layers.Activation('relu')(A8)
-    A8 = keras.layers.Conv1D(filters=128, kernel_size=3, padding="same")(A8)
-    A8 = keras.layers.Activation('relu')(A8)
+    A8 = keras.layers.Concatenate(axis=-1)([A8, A15])
+    A8 = conv1d_block(A8, 128)
     A8 = keras.layers.LayerNormalization()(A8)
 
-    A9 = keras.layers.Conv1DTranspose(filters=64, kernel_size=3, strides=2, padding="valid")(A8)
+    A9 = keras.layers.Conv1DTranspose(filters=64, kernel_size=3, strides=2, padding="same")(A8)
     A9 = keras.layers.LayerNormalization()(A9)
     A9 = keras.layers.Activation('relu')(A9)
-    A9 = Concatenate(axis=-1)([A9, A13])
-    A9 = keras.layers.Conv1D(filters=64, kernel_size=3, padding="same")(A9)
-    A9 = keras.layers.Activation('relu')(A9)
-    A9 = keras.layers.Conv1D(filters=64, kernel_size=3, padding="same")(A9)
-    A9 = keras.layers.Activation('relu')(A9)
+    A9 = keras.layers.Concatenate(axis=-1)([A9, A13])
+    A9 = conv1d_block(A9, 64)
     A9 = keras.layers.LayerNormalization()(A9)
 
-    A0 = keras.layers.Conv1DTranspose(filters=32, kernel_size=3, strides=2, padding="same")(A9)
+    A0 = keras.layers.Conv1DTranspose(filters=32, kernel_size=3, strides=2, padding="valid")(A9)
     A0 = keras.layers.LayerNormalization()(A0)
     A0 = keras.layers.Activation('relu')(A0)
-    A0 = Concatenate(axis=-1)([A0, A11])
-    A0 = keras.layers.Conv1D(filters=32, kernel_size=3, padding="same")(A0)
-    A0 = keras.layers.Activation('relu')(A0)
-    A0 = keras.layers.Conv1D(filters=32, kernel_size=3, padding="same")(A0)
-    A = keras.layers.Activation('relu')(A0)
-    # classify
+    A0 = keras.layers.Concatenate(axis=-1)([A0, A11])
+    A = conv1d_block(A0, 32)
+    #classify
     stack1 = keras.layers.LayerNormalization()(A)
     stack2 = keras.layers.AveragePooling1D(pool_size=int(stack1.shape[1]))(stack1)
     stack3 = keras.layers.AveragePooling1D(40)(stack1)
     stack4 = keras.layers.AveragePooling1D(8)(stack1)
-    stack6 = Concatenate(axis=1)([stack2, stack3, stack4])
-    stack7 = GlobalExpectationPooling1D(mode=0, m_trainable=False, m_value=1)(stack6)
-    output = keras.layers.Dense(2, activation="softmax")(stack7)
+    stack6 = keras.layers.Concatenate(axis=1)([stack2, stack3, stack4])
+    shortcut = GlobalExpectationPooling1D(mode=0, m_trainable=False, m_value=1)(stack6)
+    shortcut = keras.layers.Dense(16,
+                                kernel_regularizer=REGULARIZER
+                                )(shortcut)
+    shortcut = keras.layers.Dense(8,
+                                kernel_initializer=keras.initializers.GlorotUniform(),
+                                # kernel_regularizer=REGULARIZER
+                                )(shortcut)
+    shortcut = keras.layers.Dense(4,
+                                kernel_regularizer=REGULARIZER
+                                )(shortcut)
+    output = keras.layers.Dense(2, activation="softmax", 
+                                kernel_initializer=keras.initializers.GlorotUniform(),
+                                # kernel_regularizer=REGULARIZER
+                                )(shortcut)
     return Model(inputs=[left_input, right_input], outputs=[output])
 
 protein_list = {
