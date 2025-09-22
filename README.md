@@ -1,4 +1,6 @@
 # diPaRIS: Dynamic and Interpretable Protein-RNA Interactions Prediction with U-shaped Network and Novel Structure Coding
+[![Paper](https://img.shields.io/badge/Paper-Advanced%20Science-blueviolet?style=flat-square&logo=adobe)](https://doi.org/10.1002/advs.202506314)
+[![DOI](https://img.shields.io/badge/DOI-10.1002%2Fadvs.202506314-brightgreen?style=flat-square)](https://doi.org/10.1002/advs.202506314)
  ## Introduction
 Dynamic protein-RNA interactions are fundamental to various biological processes and disease development. These interactions occur at specific RNA binding sites, often influenced by the structural patterns of nucleotides. While existing computational methods incorporate RNA structural data in vivo, they often fail to capture the full context of nucleotide interactions, limiting their accuracy.
 ﻿
@@ -7,6 +9,8 @@ We introduce **diPaRIS**, a deep learning framework designed to predict dynamic 
 ﻿
 
 This repository includes the source code for both model training and prediction, along with an example dataset for demonstration purposes.
+
+The diPaRIS framework was published in *Advanced Science* in August 2025. For details, please refer to our paper [1].
  
  ### diPaRIS Overview
 <img src="https://github.com/CSU-LishenZhang/diPaRIS/blob/main/Overview.jpg" alt="diPaRIS Overview" width="1000"/>
@@ -116,7 +120,22 @@ python diPaRIS_predict.py --seq "Sequence of binding sites" --struc "Structure o
 **Note:**  
 If the `--protein` parameter is not specified, the program will automatically traverse and make predictions across all available datasets.
 
+##Citation
 
+If you use **diPaRIS** in your research, please cite our paper:
+
+> Zhang L, Lu C, Peng X, Guo F, Li H, Wang J. **diPaRIS: Dynamic and Interpretable Protein-RNA Interactions Prediction With U-Shaped Network and Novel Structure Encoding**. *Advanced Science*. Published online August 29, 2025. doi:[10.1002/advs.202506314](https://doi.org/10.1002/advs.202506314)
+
+```bibtex
+@article{zhang2025diparis,
+  title={diPaRIS: Dynamic and Interpretable Protein-RNA Interactions Prediction With U-Shaped Network and Novel Structure Encoding},
+  author={Zhang, Lishen and Lu, Chen and Peng, Xin and Guo, Feng and Li, Hong and Wang, Jian},
+  journal={Advanced Science},
+  year={2025},
+  note={Published online August 29, 2025},
+  doi={10.1002/advs.202506314}
+}
+```
 ## License
 
 Copyright (C) 2020 Jianxin Wang(jxwang@mail.csu.edu.cn)
